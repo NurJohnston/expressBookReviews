@@ -20,25 +20,29 @@ app.use(
 
 app.use("/customer/auth/*", function auth(req, res, next) {
 
-    if (!req.session.authorization) {
-        return res.status(403).json({
-            message: "User not logged in"
+    if (req.session.authorization) {
+
+        let token = req.session.authorization.accessToken;
+
+        jwt.verify(token, "fingerprint_customer", (err, user) => {
+
+            if (!err) {
+                next();
+            } else {
+                return res.status(403).json({
+                    message: "User not authenticated"
+                });
+            }
+
         });
+
+    } else {
+
+        return res.status(403).json({
+            message: "User has not logged in"
+        });
+
     }
-
-    let token = req.session.authorization.accessToken;
-
-    jwt.verify(token, "fingerprint_customer", (err, user) => {
-
-        if (err) {
-            return res.status(403).json({
-                message: "User not authenticated"
-            });
-        }
-
-        next();
-
-    });
 
 });
 
@@ -47,6 +51,4 @@ const PORT = 5000;
 app.use("/customer", customer_routes);
 app.use("/", genl_routes);
 
-app.listen(PORT, () => {
-    console.log("Server is running on port " + PORT);
-});
+app.listen(PORT, () => console.log("Server is running on port 5000"));
